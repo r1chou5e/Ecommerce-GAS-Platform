@@ -1,5 +1,8 @@
 const mongoose = require('mongoose');
-const connectString = 'mongodb://127.0.0.1:27017/shopDEV';
+const {
+  db: { name, host, port },
+} = require('../configs/config.mongodb');
+const connectString = `mongodb://${host}:${port}/${name}`;
 
 mongoose
   .connect(connectString)

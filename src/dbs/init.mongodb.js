@@ -1,5 +1,9 @@
 const mongoose = require('mongoose');
-const connectString = 'mongodb://127.0.0.1:27017/shopDEV';
+const {
+  db: { name, host, port },
+} = require('../configs/config.mongodb');
+const connectString = `mongodb://${host}:${port}/${name}`;
+
 const { countConnect } = require('../helpers/check.connect');
 
 class Database {
@@ -21,7 +25,7 @@ class Database {
       .then((_) => {
         console.log('Connected Mongodb Success PRO', countConnect());
       })
-      .catch((err) => console.log('Error Connect!'));
+      .catch((err) => console.log('Error Connect!', err));
   }
 
   static getInstance() {
