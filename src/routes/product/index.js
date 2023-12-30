@@ -1,13 +1,40 @@
 const express = require('express');
 const productController = require('../../controllers/product.controller');
 const asyncHandler = require('../../helpers/asyncHandler');
-const { authentication } = require('../../auth/authUtils');
+const { authenticationV2 } = require('../../auth/authUtils');
 const router = express.Router();
 
-// Authentiaction
-router.use(authentication);
+// Search
+router.get(
+  '/search/:keysearch',
+  asyncHandler(productController.getSearchProductList)
+);
 
-// Log out
+// All product
+router.get('', asyncHandler(productController.findAllProducts));
+
+// One product
+router.get('/:productId', asyncHandler(productController.findProduct));
+
+// Authentiaction
+router.use(authenticationV2);
+
+// Mutation
 router.post('', asyncHandler(productController.createProduct));
+router.post(
+  '/publish/:id',
+  asyncHandler(productController.publishProductByShop)
+);
+router.post(
+  '/unpublish/:id',
+  asyncHandler(productController.unpublishProductByShop)
+);
+
+// Query
+router.get('/drafts/all', asyncHandler(productController.getAllDraftsForShop));
+router.get(
+  '/publish/all',
+  asyncHandler(productController.getAllPublishForShop)
+);
 
 module.exports = router;
