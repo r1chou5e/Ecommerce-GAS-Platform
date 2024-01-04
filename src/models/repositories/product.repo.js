@@ -33,6 +33,15 @@ const findProduct = async ({ product_id, unSelect }) => {
   return await product.findById(product_id).select(getUnselectData(unSelect));
 };
 
+const updateProductById = async ({
+  productId,
+  bodyUpdate,
+  model,
+  isNew = true,
+}) => {
+  return await model.findByIdAndUpdate(productId, bodyUpdate, { new: isNew });
+};
+
 const searchProductByUser = async ({ keysearch }) => {
   const regexSearch = new RegExp(keysearch);
   const results = await product
@@ -93,4 +102,5 @@ module.exports = {
   publishProductByShop,
   unpublishProductByShop,
   searchProductByUser,
+  updateProductById,
 };
