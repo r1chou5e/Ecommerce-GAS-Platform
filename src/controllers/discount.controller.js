@@ -25,7 +25,7 @@ class DiscountController {
   getDiscountAmount = async (req, res, next) => {
     new SuccessResponse({
       message: 'Success get discount amount',
-      metadata: await DiscountService.getDiscountAmount({
+      metadata: await DiscountService.getDiscountAmountV2({
         ...req.body,
       }),
     }).send(res);

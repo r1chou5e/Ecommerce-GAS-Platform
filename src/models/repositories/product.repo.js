@@ -106,6 +106,21 @@ const queryProduct = async ({ query, limit, skip }) => {
     .exec();
 };
 
+const filteredAvailableProducts = async (products) => {
+  return await Promise.all(
+    products.map(async (product) => {
+      const foundProduct = await findProductById(product.productId);
+      if (foundProduct) {
+        return {
+          price: foundProduct.product_price,
+          quantity: product.quantity,
+          productId: product.productId,
+        };
+      }
+    })
+  );
+};
+
 module.exports = {
   findAllDraftsForShop,
   findAllPublishForShop,
@@ -116,4 +131,5 @@ module.exports = {
   unpublishProductByShop,
   searchProductByUser,
   updateProductById,
+  filteredAvailableProducts,
 };

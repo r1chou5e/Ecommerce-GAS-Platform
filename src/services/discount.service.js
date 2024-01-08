@@ -206,7 +206,7 @@ class DiscountService {
       }
     }
 
-    // Check fixed_amount or percentage
+    // Check fixed or percentage
     const amount =
       discount_type === 'fixed'
         ? discount_value
@@ -217,6 +217,86 @@ class DiscountService {
       discount: amount,
       totalPrice: totalOrder - amount,
     };
+  }
+
+  static async getDiscountAmountV2({ discounts, userId, products }) {
+    let discountAmount = {
+      totalOrder: 0,
+      discount: 0,
+      totalPrice: 0,
+    };
+    for (let i = 0; i < discounts.length; i++) {
+      const foundDiscount = await checkDiscountExists({
+        model: discount,
+        filter: {
+          discount_code: discounts[i].codeId,
+          discount_shop_id: convertToObjectIdMongodb(discounts[i].shopId),
+        },
+      });
+
+      if (!foundDiscount)
+        throw new NotFoundError(`Discount ${discounts[i].codeId} not found`);
+
+      const {
+        discount_code,
+        discount_active,
+        discount_max_uses,
+        discount_start_date,
+        discount_end_date,
+        discount_min_order_value,
+        discount_max_uses_per_user,
+        discount_users_used,
+        discount_type,
+        discount_value,
+      } = foundDiscount;
+
+      if (!discount_active)
+        throw new BadRequestError(`Discount ${discount_code} invalid`);
+      if (!discount_max_uses)
+        throw new BadRequestError(`Discount ${discount_code} out of stock`);
+      if (
+        new Date() < new Date(discount_start_date) ||
+        new Date() > new Date(discount_end_date)
+      )
+        throw new BadRequestError(`Discount ${discount_code} expired`);
+
+      // Get total
+      discountAmount.totalOrder = products.reduce((acc, product) => {
+        return acc + product.quantity * product.price;
+      }, 0);
+
+      if (discount_min_order_value > 0) {
+        if (discountAmount.totalOrder < discount_min_order_value)
+          throw new BadRequestError(
+            `Discount ${discount_code} requires a minium order value of ${discount_min_order_value}`
+          );
+      }
+
+      if (discount_max_uses_per_user > 0) {
+        const userUseDiscount = discount_users_used.find(
+          (user) => user.userId === userId
+        );
+        if (userUseDiscount) {
+          if (userUseDiscount.length >= discount_max_uses_per_user)
+            throw new NotFoundError(
+              'User has reached the maximum allowed usage of the discount!'
+            );
+        }
+      }
+
+      // Check fixed or percentage
+      const amount =
+        discount_type === 'fixed'
+          ? discount_value
+          : discountAmount.totalOrder * (discount_value / 100);
+
+      discountAmount.discount += amount;
+    }
+
+    discountAmount.totalPrice =
+      discountAmount.totalOrder - discountAmount.discount;
+
+    return discountAmount;
   }
 
   static async deleteDiscountCode({ shopId, codeId }) {
